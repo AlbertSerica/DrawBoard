@@ -2,7 +2,7 @@
 
 ![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/language-JavaScript-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/build-passing-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/electron-1.7.6-blue.svg?style=flat-square)
 
-Written in JavaScript, build by electron.
+Written in JavaScript, built by electron.
 
 > Quick-Start:
 >
