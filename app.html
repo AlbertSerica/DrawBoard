@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>画板</title>
+    <link type="text/css" rel="stylesheet" href="app/css/materialize.css" media="screen,projection" />
+    <script>
+        window.nodeRequire = require;
+        delete window.require;
+        delete window.exports;
+        delete window.module;
+    </script>
+    <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="app/js/materialize.min.js"></script>
+    <script type="text/javascript" src="app/js/draw.js"></script>
+    <style>
+        canvas {
+            display: block;
+            cursor: pointer;
+            background-color: #FFFFFF;
+            border: 1px solid #CCCCCC;
+            max-width: 100%;
+        }
+        
+    </style>
+</head>
+
+<body>
+    
+    <div id="toolbar" class="row">
+        <div class="col s12">
+            <div class="card hoverable">
+                <div class="card-content">
+                    <button class="waves-effect waves-light btn blue-grey">新建</button>
+                    <button class="waves-effect waves-light btn blue-grey">撤销</button>
+                    <button class="waves-effect waves-light btn blue-grey">保存</button>
+                    <button class="waves-effect waves-light btn red">清空</button>
+                </div>
+                <div class="card-tabs">
+                    <ul class="tabs tabs-fixed-width">
+                        <li class="tab"><a class="active" href="#shapes">绘制</a></li>
+                        <li class="tab"><a href="#styles">样式</a></li>
+                        <li class="tab"><a href="#test6">其他</a></li>
+                    </ul>
+                </div>
+                <div class="card-content grey lighten-4">
+                    <div id="shapes">
+                        <div class="row" id="shape-type">
+                            <div class="col s8" >
+                                <button class="waves-effect waves-light btn blue darken-1" data-shape="line">直线</button>
+                                <button class="waves-effect waves-light btn blue darken-1" data-shape="rect">矩形</button>
+                                <button class="waves-effect waves-light btn blue darken-1" data-shape="circle">圆</button>
+                              
+                                <button class="waves-effect waves-light btn blue darken-1" id="poly" data-shape="poly">多边形</button>
+                                <span class="input-field range-field inline" id="edge" style="display:none;">
+                                    <span>边数</span>
+                                    <input type="range" id="edge-num" value="1" min="3" max="10" >
+                                </span>
+            
+                                <button class="waves-effect waves-light btn teal darken-1" data-shape="pen">铅笔</button>
+                            </div>
+                            <div class="col s4">
+                                <button class="waves-effect waves-light btn blue darken-1" data-shape="eraser">橡皮</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="styles">
+                        <div class="row">
+                            <div class="col s8">
+                                <span class="waves-effect waves-light btn grey darken-1">线条色<input type="color" name="color" value="#000000"></span> 
+                                <span class="waves-effect waves-light btn grey darken-1">填充色<input type="color" name="color" value="#000000"></span>
+                            </div>
+                            <div class="col s1 right-align">
+                                <span>线宽</span>
+                            </div>
+                            <div class="col s3">
+                              
+                                <span class="range-field inline input-field">
+                                    <input type="range" id="line-width" value="1" min="1" max="100" >
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="draw-board" class="row">
+        <div class="col s12">
+<canvas id="canvas" ></canvas>
+        </div>
+       
+    </div>
+</body>
+<script>
+    var settings = {
+        "shape":"pen",
+        "lineWidth":1,
+        "edgeNum":3,
+        "strokeColor":"#000",
+        "fillColor":"#000", 
+    }
+    
+    $(function(){
+        var history = [];
+        var canvas=document.getElementById("canvas");
+        canvas.width= document.body.clientWidth;
+        canvas.height= document.documentElement.clientHeight-$("#draw-board").offset().top-20;
+        $(window).resize(function(){ 
+            canvas.width= document.body.clientWidth;
+            canvas.height= document.documentElement.clientHeight-$("#draw-board").offset().top-20;
+            if (history.length != 0) { 
+                context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+            }
+        });
+        
+
+        var context = canvas.getContext("2d");
+
+        $("#poly").click(function(e){
+            $("#edge").show();
+        });
+        $("#edge").mouseleave(function(){
+            $("#edge").hide();
+        });
+        $("#shape-type button").each(function(index,ele){
+            $(ele).click(function(){
+                $("#shape-type button").removeClass("teal").addClass("blue");
+                $(this).removeClass("blue").addClass("teal");
+                settings.shape=$(this).attr("data-shape");
+                if(settings.shape!="poly"){
+                    $("#edge").hide();
+                }
+            })
+        })
+        var x, y, w, h;
+        var lx, ly, lw, lh;
+        var style="stroke";
+        var color="#000";
+        canvas.onmousedown = function (e) {//按下鼠标
+            x = e.offsetX;//按下鼠标时的位置
+            y = e.offsetY;
+            if (settings.shape == "pen") {
+                context.beginPath();
+                context.moveTo(x, y);//按下鼠标时的位置 设置为起点
+            }
+            if (settings.shape == "eraser") {
+                context.clearRect(x - 5, y - 5, 10, 10);
+            }
+            // if (cutflag && settings.shaple == "cut") {
+            //     if (history.length != 0) {
+            //         history.splice(-1, 1);
+            //     }
+            // }
+            var draw = new Draw(context, { type: style, color: color, width: settings.linewidth });//实例化构造函数
+            canvas.onmousemove = function (e) {
+                w = e.offsetX;//移动中的位置
+                h = e.offsetY;
+                if (settings.shape != "eraser") {
+                    context.clearRect(0, 0, canvas.width,canvas.height);//清屏，实现动态绘制
+                    if (history.length != 0) {
+                        context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+                    }
+                }
+                // if (cutflag && settings.shape == "cut") {
+                //     if (iscut) {
+                //         context.clearRect(lx, ly, lw - lx, lh - ly);
+                //     }
+                //     var nx = lx + (w - x);
+                //     var ny = ly + (h - y);
+                //     context.putImageData(cutdata, nx, ny);
+                // } else 
+                if (settings.shape == "poly") {
+                    draw[settings.shape](x, y, w, h, settings.edgeNum);
+                } else {
+                    draw[settings.shape](x, y, w, h);
+                }
+            }
+            document.onmouseup = function () {
+                canvas.onmousemove = null;
+                document.onmouseup = null;
+                // if (settings.shape == "cut") {
+                //     if (!cutflag) {
+                //         cutflag = true;
+                //         cutdata = context.getImageData(x + 1, y + 1, w - x - 2, h - y - 2);
+                //         lx = x; ly = y; lw = w; lh = h;
+                //         container.css({ display: "none" });
+                //     } else {
+                //         cutflag = false;
+                //         container.css({ display: "block" });
+                //     }
+                // }
+                history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+            }
+        }
+    })
+</script>
+
+</html>
