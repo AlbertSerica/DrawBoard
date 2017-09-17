@@ -1,45 +1,51 @@
 function Draw(cxt, settings) {
     this.cxt = cxt;
-    this.type = settings.type || "stroke";
-    this.color = settings.color || "#000";
+    this.strokeFillStyle = settings.strokeFillStyle || "stroke";
+    this.strokeColor = settings.strokeColor || "#000";
+    this.fillColor = settings.fillColor || "#fff";
     this.width = settings.width || "1";
 }
 Draw.prototype = {
-    init: function () {
-        this.cxt.strokeStyle = this.color;
-        this.cxt.fillStyle = this.color;
+    setup: function () {
+        this.cxt.strokeStyle = this.strokeColor;
+        this.cxt.fillStyle = this.fillColor;
         this.cxt.lineWidth = this.width;
     },
-    rect: function (x1, y1, x2, y2) {
-        this.init();
-        this.cxt.beginPath();
-        this.cxt.rect(x1, y1, x2 - x1, y2 - y1);
-        if (this.type == "stroke") {
+    draw: function () {
+        if (this.strokeFillStyle == "stroke") {
             this.cxt.stroke();
-        } else if (this.type == "fill") {
+        }
+        else if (this.strokeFillStyle == "fill") {
+            this.cxt.fill();
+        }
+        else if (this.strokeFillStyle == "strokeFill") {
+            this.cxt.stroke();
             this.cxt.fill();
         }
     },
+    rect: function (x1, y1, x2, y2) {
+        this.setup();
+        this.cxt.beginPath();
+        this.cxt.rect(x1, y1, x2 - x1, y2 - y1);
+        this.draw();
+        
+    },
     line: function (x1, y1, x2, y2) {
-        this.init();
+        this.setup();
         this.cxt.beginPath();
         this.cxt.moveTo(x1, y1);
         this.cxt.lineTo(x2, y2);
         this.cxt.stroke();
     },
     circle: function (x1, y1, x2, y2) {
-        this.init();
+        this.setup();
         var r = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
         this.cxt.beginPath();
         this.cxt.arc(x1, y1, r, 0, 2 * Math.PI);
-        if (this.type == "stroke") {
-            this.cxt.stroke();
-        } else if (this.type == "fill") {
-            this.cxt.fill();
-        }
+        this.draw();
     },
     poly: function (x1, y1, x2, y2, n) {
-        this.init();
+        this.setup();
         var cxt = this.cxt;
         var r = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));;
         cxt.save();
@@ -54,15 +60,11 @@ Draw.prototype = {
             cxt.rotate(Math.PI * 2 / n);
             cxt.lineTo(nx, -ny);
         }
-        if (this.type == "stroke") {
-            this.cxt.stroke();
-        } else if (this.type == "fill") {
-            this.cxt.fill();
-        }
+        this.draw();
         cxt.restore();
     },
     pen: function (x1, y1, x2, y2) {
-        this.init();
+        this.setup();
         this.cxt.save();
         this.cxt.lineCap = "round";
         this.cxt.lineTo(x2, y2);
@@ -74,7 +76,7 @@ Draw.prototype = {
         this.cxt.clearRect(x2 - 5, y2 - 5, 10, 10);
     },
     cut: function (x1, y1, x2, y2) {
-        this.init();
+        this.setup();
         this.cxt.save();
         this.cxt.setLineDash([4, 2]);
         this.cxt.beginPath();
