@@ -1,225 +1,290 @@
-$(function () {
+var settings = {
+    "shape":"pen",
+    "lineWidth":3,
+    "edgeNum":3,
+    "strokeFillStyle":"strokeFill",
+    "strokeColor":"#000",
+    "fillColor":"#fff", 
+    "customizeCanvas":false,
+    "customizeCanvasWidth":0,
+    "customizeCanvasHeight":0,
+    "image":null,
+}
+
+$(function(){
+    //Initialize modals
+    $('.modal').modal({
+        dismissible: true, // Modal can be dismissed by clicking outside of the modal
+        opacity: .5, // Opacity of modal background
+        inDuration: 300, // Transition in duration
+        outDuration: 200, // Transition out duration
+        startingTop: '4%', // Starting top style attribute
+        endingTop: '10%', // Ending top style attribute
+        }
+    );
+    //Initialize the App: Canvas & Settings
+    var history = [];
+    var canvas=document.getElementById("canvas");
+    var context = canvas.getContext("2d");
+
+    function setCanvas(width,height){
+        canvas.width=width;
+        canvas.height=height;
+    }
+   
+
+    setCanvas(document.documentElement.clientWidth,document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+    
+    $(window).resize(function(){ 
+        if(!settings.customizeCanvas){
+            setCanvas(document.documentElement.clientWidth,document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+        }
+        if (history.length != 0) { 
+            context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+        }
+    });
     
 
-var container = $(".container");
-var canvas = document.querySelector("canvas");
-var screenWidth = document.documentElement.clientWidth;
-var screenHeight = document.documentElement.clientHeight;
-var width = screenWidth - 295;
-var height = screenHeight - 15;
-canvas.width = width;
-canvas.height = height;
-var obj = canvas.getContext("2d");
-var typechoose = $(".type li");
-var stylechoose = $(".style li");
-var colorchoose = document.querySelector("input[type=color]");
-var widthchoose = document.querySelector(".linewidth input[type=number]");
-var canvasWidth = document.querySelector(".xinjian_width input[type=number]");
-var canvasHeight = document.querySelector(".xinjian_height input[type=number]");
-canvasWidth.value = width; canvasHeight.value = height;
-canvasWidth.max = screenWidth - 295; canvasHeight.max = screenHeight - 15;
-var ding = document.querySelector("#ding");
-var poly = $(".poly");
-var bian = $(".bian");
-var polychoose = $(".bian input");
-var shezhi = $(".shezhi");
-var cut = $(".cut");
-var copy = $(".copy");
-var back = $(".back");
-var clear = $(".clear");
-var save = $(".save");
-var create = $(".create");
-var xinjian = $(".xinjian");
-var create_close = $(".xinjian_before");
-var cutflag = false;
-var iscut = true;
-var color = "#000";
-var type = "line";
-var n = 3;
-var linewidth = "1";
-var style = "stroke";
-var arr = [];
-$(".fill").css({ display: "none" });
-// 多边形
-poly.hover(function () {
-    bian.fadeIn();
-}, function () {
-    bian.fadeOut();
-})
-// 绘制形状
-typechoose.each(function (index, ele) {
-    $(ele).click(function () {
-        typechoose.removeClass("typeactive");
-        $(this).addClass("typeactive");
-        cut.css({ color: "#fff", backgroundColor: "#5bd219", opacity: 1 });
-        copy.css({ color: "#fff", backgroundColor: "#5bd219", opacity: 1 });
-        type = $(this).attr("data");
-        if ($(this).is(".line") || $(this).is(".pen")) {
-            style = "stroke";
-            $(".stroke").addClass("styleactive");
-            $(".fill").css({ display: "none" }).removeClass("styleactive");
-        } else {
-            $(".fill").css({ display: "block" });
-        }
-    })
-})
-// 描边、填充单击事件
-stylechoose.each(function (index, ele) {
-    $(ele).click(function () {
-        style = $(this).attr("class");
-        stylechoose.removeClass("styleactive");
-        $(this).toggleClass("styleactive");
-    })
-})
-// 剪切
-cut.click(function () {
-    type = $(this).attr("data");
-    typechoose.removeClass("typeactive");
-    $(this).css({ color: "#5bd219", backgroundColor: "#fff" }).toggleClass("shezhistyle");
-    iscut = true;
-})
-copy.click(function () {
-    type = "cut";
-    typechoose.removeClass("typeactive");
-    $(this).css({ color: "#5bd219", backgroundColor: "#fff" }).toggleClass("shezhistyle");
-    iscut = false;
-})
-// 设置
-shezhi.each(function (index, ele) {
-    if ($(ele).is(".cut") || $(ele).is(".copy")) {
-        return;
-    } else {
-        $(ele).click(function () {
-            $(this).css({ color: "#5bd219", backgroundColor: "#fff" }).animate({ opacity: 0.99 }, 200, function () {
-                $(this).css({ color: "#fff", backgroundColor: "#5bd219", opacity: 1 });
-            });
-        })
-    }
-})
-// 撤销
-back.click(function () {
-    arr.pop();
-    obj.clearRect(0, 0, width, height);
-    if (arr.length > 0) {
-        obj.putImageData(arr[arr.length - 1], 0, 0, 0, 0, width, height);
-    }
-})
-// 清除
-clear.click(function () {
-    arr = [];
-    obj.clearRect(0, 0, width, height);
-})
-// 保存
-save.click(function () {
-    var reg = canvas.toDataURL("image/png");//跳转页面手动保存
-    //        var reg=canvas.toDataURL("image/png").replace("image/png","image/octet-stream");//直接自动保存下载
-    location.href = reg;
-})
-// 新建画布
-create.click(function () {
-    xinjian.fadeIn();
-})
-create_close.click(function (e) {
-    e.stopPropagation()
-    xinjian.fadeOut();
-})
-canvasWidth.onblur = function () {
-    if (this.value <= this.min) {
-        this.value = this.min;
-    }
-    if (this.value >= screenWidth - 295) {
-        this.value = screenWidth - 295;
-    }
-    width = this.value;
-}
-canvasHeight.onblur = function () {
-    if (this.value <= this.min) {
-        this.value = this.min;
-    }
-    if (this.value >= screenHeight - 15) {
-        this.value = screenHeight - 15;
-    }
-    height = this.value;
-}
-ding.onclick = function (e) {
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.left = (screenWidth + 295 - canvas.width) / 2 + "px";
-    canvas.style.top = (screenHeight - 5 - canvas.height) / 2 + "px";
-    arr = [];
-    obj.clearRect(0, 0, width, height);
-    e.stopPropagation()
-    xinjian.fadeOut();
-}
-// 颜色选择
-colorchoose.onchange = function () {
-    color = this.value;
-}
-// 粗细改变
-widthchoose.onchange = function () {
-    linewidth = this.value;
-}
-//多边形边数
-polychoose.change(function () {
-    n = this.value;
-})
-var x, y, w, h;
-var lx, ly, lw, lh;
-var cutdata;
-canvas.onmousedown = function (e) {
-    x = e.offsetX;
-    y = e.offsetY;
-    if (type == "pen") {
-        obj.beginPath();
-        obj.moveTo(x, y);
-    }
-    if (type == "eraser") {
-        obj.clearRect(x - 5, y - 5, 10, 10);
-    }
-    if (cutflag && type == "cut") {
-        if (arr.length != 0) {
-            arr.splice(-1, 1);
-        }
-    }
-    var draw = new Draw(obj, { type: style, color: color, width: linewidth });//实例化构造函数
-    canvas.onmousemove = function (e) {
-        w = e.offsetX;
-        h = e.offsetY;
-        if (type != "eraser") {
-            obj.clearRect(0, 0, width, height);
-            if (arr.length != 0) {
-                obj.putImageData(arr[arr.length - 1], 0, 0, 0, 0, width, height);
-            }
-        }
-        if (cutflag && type == "cut") {
-            if (iscut) {
-                obj.clearRect(lx, ly, lw - lx, lh - ly);
-            }
-            var nx = lx + (w - x);
-            var ny = ly + (h - y);
-            obj.putImageData(cutdata, nx, ny);
-        } else if (type == "poly") {
-            draw[type](x, y, w, h, n);
-        } else {
-            draw[type](x, y, w, h);
-        }
+   
+    //Poly Control
+    $("#poly").click(function(e){
+        $("#edge").show();
+    });
+    $("#edge").mouseleave(function(){
+        $("#edge").hide();
+    });
 
-    }
-    document.onmouseup = function () {
-        canvas.onmousemove = null;
-        document.onmouseup = null;
-        if (type == "cut") {
-            if (!cutflag) {
-                cutflag = true;
-                cutdata = obj.getImageData(x + 1, y + 1, w - x - 2, h - y - 2);
-                lx = x; ly = y; lw = w; lh = h;
-                container.css({ display: "none" });
-            } else {
-                cutflag = false;
-                container.css({ display: "block" });
+    //Style Toggle
+    $("#shape-type button").each(function(index,ele){
+        $(ele).click(function(){
+            $("#shape-type button").removeClass("teal").addClass("blue");
+            $(this).removeClass("blue").addClass("teal");
+            settings.shape=$(this).attr("data-shape");
+            if(settings.shape!="poly"){
+                $("#edge").hide();
+            }
+        })
+    });
+    $("#new-trigger").click(function(){
+        $("#customize-canvas-width").val(document.documentElement.clientWidth);
+        $("#customize-canvas-height").val(document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+        $("#canvas").removeClass("fluent");
+        settings.customizeCanvas=true;
+        settings.customizeCanvasWidth= $("#customize-canvas-width").val();
+        settings.customizeCanvasHeight=$("#customize-canvas-height").val();
+    })
+    //Setting Listeners
+    $("#stroke-color").change(function(){
+        settings.strokeColor=$(this).val();
+    });
+    $("#fill-color").change(function(){ 
+        settings.fillColor=$(this).val(); 
+    });
+    $("#line-width").change(function(){
+        settings.lineWidth=$(this).val();
+    });
+    $("#edge-num").change(function(){
+        settings.edgeNum=$(this).val();
+    });
+    $("#customize-canvas-height").change(function(){
+        $("#presets .card-panel").each(function(index,ele){
+            $("#presets .card-panel").removeClass("teal").addClass("grey");
+        });
+        settings.customizeCanvasHeight=$(this).val();
+        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
+            $("#customize-confirm").removeAttr("disabled");
+        }
+        else{
+            $("#customize-confirm").attr("disabled","disabled");
+        }
+    });
+    $("#stroke-fill-style-picker").change(function(){
+        if($("#enable-border").is(":checked")){
+            if($("#enable-fill").is(":checked")){
+                $("#enable-border").removeAttr("disabled");
+                $("#enable-fill").removeAttr("disabled");
+                settings.strokeFillStyle="strokeFill";
+                return;
+            }
+            else{
+                $("#enable-fill").removeAttr("disabled");
+                $("#enable-border").attr("disabled","disabled");
+                settings.strokeFillStyle="stroke";
+                return;
             }
         }
-        arr.push(obj.getImageData(0, 0, width, height));
+        else if($("#enable-fill").is(":checked")){
+            if($("#enable-border").is(":checked")){
+                $("#enable-border").removeAttr("disabled");
+                $("#enable-fill").removeAttr("disabled");
+                settings.strokeFillStyle="strokeFill";
+                return;
+            }
+            else{
+                $("#enable-border").removeAttr("disabled");
+                $("#enable-fill").attr("disabled","disabled");
+                settings.strokeFillStyle="fill";
+                return;
+            }
+        }
+    });
+    $("#open-image").change(function(){
+        if(this.files.length){
+            let file=this.files[0];
+            let reader=new FileReader();
+            if(!/image\/\w+/.test(file.type)){
+                $("#open-message").text("请确保文件为图像类型");
+                return false;
+            }
+            // onload是异步操作
+            reader.onload = function(){
+                settings.image=new Image();
+                settings.image.src=reader.result;
+                
+                $("#open-message").html('<img src="'+reader.result+'" id="image-to-edit">');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+   
+    //Confirm Canvas Size Settings
+    $("#customize-confirm").click(function(e){
+        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
+            settings.customizeCanvas=true;
+            setCanvas(settings.customizeCanvasWidth,settings.customizeCanvasHeight);
+        }
+        else{
+            e.preventDefault();
+            settings.customizeCanvasWidth=0;
+            settings.customizeCanvasHeight=0;
+        }
+        if(settings.image.src){
+        let imgWidth=settings.image.width;
+        let imgHeight=settings.image.height;
+        let whratio=imgWidth/imgHeight;
+        let hwratio=imgHeight/imgWidth;
+        if(imgHeight>canvas.height){
+            imgHeight=canvas.height;
+            imgWidth=imgHeight*whratio;
+            if(imgWidth>canvas.width){
+                imgWidth=canvas.width;
+                imgHeight=imgWidth*hwratio;
+            }
+        }
+        else if(imgWidth>canvas.width){
+            imgWidth=canvas.width;
+            imgHeight=imgWidth*hwratio;
+        }
+        context.drawImage(settings.image,0,0,imgWidth,imgHeight);
+        history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+        }
+    });
+
+    //Customize Canvas
+    $("#presets .card-panel").each(function(index,ele){
+        $(ele).click(function(){
+            $("#presets .card-panel").removeClass("teal").addClass("grey");
+            $(this).removeClass("grey").addClass("teal");
+            settings.customizeCanvasWidth=$(this).attr("data-width");
+            settings.customizeCanvasHeight=$(this).attr("data-height");
+            $("#customize-canvas-width").val(settings.customizeCanvasWidth);
+            $("#customize-canvas-height").val(settings.customizeCanvasHeight);
+            $("#customize-confirm").removeAttr("disabled");
+        })
+    });
+    //Validator
+    $("#customize-canvas-width").change(function(){
+        $("#presets .card-panel").each(function(index,ele){
+            $("#presets .card-panel").removeClass("teal").addClass("grey");
+        });
+        settings.customizeCanvasWidth=$(this).val();
+        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
+            $("#customize-confirm").removeAttr("disabled");
+        }
+        else{
+            $("#customize-confirm").attr("disabled","disabled");
+        }
+    });
+
+    //Tool Bar Events
+    $("#revoke").click(function(){
+        history.pop();
+        context.clearRect(0,0,canvas.width,canvas.height);
+        if(history.length>0){
+            context.putImageData(history[history.length-1],0,0,0,0,canvas.width,canvas.height);
+        }
+    })
+    $("#save").click(function(){
+        var reg=canvas.toDataURL("image/png");
+        //var reg=canvas.toDataURL("image/png").replace("image/png","image/octet-stream");//直接自动保存下载
+        location.href=reg;
+    })
+    $("#clear").click(function(){
+        history=[];
+        context.clearRect(0,0,canvas.width,canvas.height);
+    })
+
+    var startX, startY, currentX, currentY;
+    var lx, ly, lw, lh;
+    canvas.onmousedown = function (e) {//按下鼠标
+        startX = e.offsetX;//按下鼠标时的位置
+        startY = e.offsetY;
+        if (settings.shape == "pen") {
+            context.beginPath();
+            context.moveTo(startX, startY);//按下鼠标时的位置 设置为起点
+        }
+        if (settings.shape == "eraser") {
+            context.clearRect(startX - 5, startY - 5, 10, 10);
+        }
+        // if (cutflag && settings.shaple == "cut") {
+        //     if (history.length != 0) {
+        //         history.splice(-1, 1);
+        //     }
+        // }
+        var draw = new Draw(context, { 
+            strokeFillStyle: settings.strokeFillStyle, 
+            strokeColor: settings.strokeColor, 
+            fillColor:settings.fillColor,
+            width: settings.lineWidth 
+        });//实例化构造函数
+        canvas.onmousemove = function (e) {
+            currentX = e.offsetX;//移动中的位置
+            currentY = e.offsetY;
+            if (settings.shape != "eraser") {
+                context.clearRect(0, 0, canvas.width,canvas.height);//清屏，实现动态绘制
+                if (history.length != 0) {
+                    context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+                }
+            }
+            // if (cutflag && settings.shape == "cut") {
+            //     if (iscut) {
+            //         context.clearRect(lx, ly, lw - lx, lh - ly);
+            //     }
+            //     var nx = lx + (currentX - startX);
+            //     var ny = ly + (currentY - startY);
+            //     context.putImageData(cutdata, nx, ny);
+            // } else 
+            if (settings.shape == "poly") {
+                draw[settings.shape](startX, startY, currentX, currentY, settings.edgeNum);
+            } else {
+                draw[settings.shape](startX, startY, currentX, currentY);
+            }
+        }
+        document.onmouseup = function () {
+            canvas.onmousemove = null;
+            document.onmouseup = null;
+            // if (settings.shape == "cut") {
+            //     if (!cutflag) {
+            //         cutflag = true;
+            //         cutdata = context.getImageData(startX + 1, startY + 1, currentX - startX - 2, currentY - startY - 2);
+            //         lx = startX; ly = startY; lw = currentX; lh = currentY;
+            //         container.css({ display: "none" });
+            //     } else {
+            //         cutflag = false;
+            //         container.css({ display: "block" });
+            //     }
+            // }
+            history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+        }
     }
-}
 })
