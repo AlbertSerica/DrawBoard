@@ -1,3 +1,3 @@
-cmd.exe
 node_modules/
 *.txt
+webpack.config.js
