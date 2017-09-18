@@ -21,8 +21,7 @@
   },
   "homepage": "https://github.com/AlbertSerica/DrawBoard#readme",
   "devDependencies": {
-    "electron": "^1.7.6",
-    "webpack": "^3.6.0"
+    "electron": "^1.7.6"
   },
   "dependencies": {
     "jquery": "^3.2.1",
