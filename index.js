@@ -1,6 +1,8 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
+const ipc=require('electron').ipcMain
+const dialog = require('electron').dialog
 
 // 保持一个对于 window 对象的全局引用，如果你不这样做，
 // 当 JavaScript 对象被垃圾回收， window 会被自动地关闭
@@ -46,6 +48,20 @@ function createWindow () {
 // 创建浏览器窗口时，调用这个函数。
 // 部分 API 在 ready 事件触发后才能使用。
 app.on('ready', createWindow)
+app.on('ready', function () {
+  ipc.on('save-image', function (event) {
+    const options = {
+      title: '保存图像',
+      defaultPath: path.join(__dirname, 'image.png'),
+      filters: [
+        { name: 'Images', extensions: ['png','jpg'] }
+      ]
+    }
+    dialog.showSaveDialog(options, function (filename) {
+      event.sender.send('saved-image', filename)
+    })
+  })
+})
 
 // 当全部窗口关闭时退出。
 app.on('window-all-closed', () => {
@@ -66,3 +82,29 @@ app.on('activate', () => {
 
 // 在这文件，你可以续写应用剩下主进程代码。
 // 也可以拆分成几个文件，然后用 require 导入。
+// ipc.on("save-file-dialog", function (e) {
+//   dialog.showSaveDialog({
+//     filters: [
+//       {name: 'Images', extensions: ['jpg', 'png']},
+//     ]
+//   }, function (files) {
+//     if (files) {
+//       event.sender.send("selected-directory", files);
+//     }
+//   })
+// })
+
+// function save() {
+//   dialog.showSaveDialog({
+//     filters: [
+//       {name: 'Images', extensions: ['jpg', 'png']},
+//     ]
+//   }, function (files) {
+//     if (files) {
+//       alert("Selected!");
+//     }
+//   })
+// }
+
+//Save
+//document.getElementById("save").addEventListener("click", save());
