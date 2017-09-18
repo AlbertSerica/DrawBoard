@@ -16,7 +16,7 @@ WebGL Lib: glfx.js
 >
 > To build the desktop app: `npm start` 
 
-###Features
+##Features
 
 ####Layout
 
