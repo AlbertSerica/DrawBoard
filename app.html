@@ -10,18 +10,25 @@
         // Using nodeRequire instead of require for node modules
         // To be honest, jQuery is not recomended if you are building your app on electron.
         // I will use Vue instead next time ( if there is "next time" ).
-        // Why not "window.$ = window.jQuery = require('../node_modules/jquery/dist/jquery.min.js')"?
+        // Why not "window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.min.js')"?
         // Because it will also cause a conflict between jQuery & materialize-css!
+        
         window.nodeRequire = require;
         delete window.require;
         delete window.exports;
         delete window.module;
     </script>
     
-    <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>   
     <script type="text/javascript" src="app/js/materialize.min.js"></script>
-    <script type="text/javascript" src="app/js/draw.js"></script>
-    <script type="text/javascript" src="app/js/app.js"></script>
+    <!-- <script type="text/javascript" src="app/js/draw.js"></script>
+    <script type="text/javascript" src="app/js/app.js"></script> -->
+    <!-- <script>nodeRequire('./node_modules/jquery/dist/jquery.min.js')</script>
+    <script>nodeRequire('./node_modules/materialize-css/js/hammer.min.js')</script>
+    <script>nodeRequire('./node_modules/materialize-css/dist/js/materialize.min.js')</script> -->
+   
+    <!-- <script>nodeRequire('./app/js/draw.js')</script> -->
+    <script>nodeRequire('./app/js/app.js')</script>
     <script>
 
     </script>

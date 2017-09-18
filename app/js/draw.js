@@ -86,3 +86,5 @@ Draw.prototype = {
         this.cxt.restore();
     }
 }
+
+module.exports = Draw;

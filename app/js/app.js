@@ -1,6 +1,15 @@
-const ipc=nodeRequire('electron').ipcRenderer;
-const nativeImage = nodeRequire('electron').nativeImage
-const fs=nodeRequire('fs')
+//注意这里的都是相对项目的根目录（即index.js所在位置）的路径
+const Draw = nodeRequire('./app/js/draw');
+const setCanvas = nodeRequire('./app/js/file-events').setCanvas;
+const revoke = nodeRequire('./app/js/file-events').revoke;
+const autoSave = nodeRequire('./app/js/file-events').autoSave;
+const refreshClient = nodeRequire('./app/js/file-events').refreshClient;
+const clearClient = nodeRequire('./app/js/file-events').clearClient;
+const listen = nodeRequire('./app/js/listeners').listen;
+const ipc = nodeRequire('electron').ipcRenderer;
+const nativeImage = nodeRequire('electron').nativeImage;
+const fs = nodeRequire('fs');
+
 var settings = {
     "shape":"pen",
     "lineWidth":3,
@@ -17,7 +26,9 @@ var settings = {
 
 
 $(function () {
+    
     //Listeners
+    listen(settings);
     ipc.on('saved-image', function (event, path) {
         if (!path) {
             alert("请选择正确的路径！");
@@ -28,7 +39,6 @@ $(function () {
             fs.writeFile(path, image.toPNG(), function (err) {
                 if (err)
                     console.log(err);
-              
             });
         }
         console.log(path);
@@ -43,55 +53,24 @@ $(function () {
         endingTop: '10%', // Ending top style attribute
         }
     );
+
     //Initialize the App: Canvas & Settings
     var history = [];
     var canvas=document.getElementById("canvas");
     var context = canvas.getContext("2d");
 
-    function setCanvas(width,height){
-        canvas.width=width;
-        canvas.height = height;
-        //Set Background Color, Otherwise it will be transparent
-        context.beginPath();
-        context.fillStyle = "#fff";
-        context.rect(0, 0, canvas.width, canvas.height);
-        context.fill();
-
-    }
-   
-
-    setCanvas(document.documentElement.clientWidth,document.documentElement.clientHeight-$("#draw-board").offset().top-20);
-    history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+    setCanvas(canvas,context,document.documentElement.clientWidth,document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+    autoSave(canvas, context, history); 
     $(window).resize(function(){ 
         if(!settings.customizeCanvas){
-            setCanvas(document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
-            context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);
-            history.pop();
-            history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+            setCanvas(canvas,context,document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
+            refreshClient(canvas, context, history); 
+            revoke(context,history, false);
+            autoSave(canvas, context, history);
         }
     });
+     
     
-
-   
-    //Poly Control
-    $("#poly").click(function(e){
-        $("#edge").show();
-    });
-    $("#edge").mouseleave(function(){
-        $("#edge").hide();
-    });
-
-    //Style Toggle
-    $("#shape-type button").each(function(index,ele){
-        $(ele).click(function(){
-            $("#shape-type button").removeClass("teal").addClass("blue");
-            $(this).removeClass("blue").addClass("teal");
-            settings.shape=$(this).attr("data-shape");
-            if(settings.shape!="poly"){
-                $("#edge").hide();
-            }
-        })
-    });
     $("#new-trigger").click(function () {
         //创建画布时，默认为当前屏幕大小
         $("#customize-canvas-width").val(document.documentElement.clientWidth);
@@ -99,64 +78,35 @@ $(function () {
         $("#canvas").removeClass("fluent");
         settings.customizeCanvas=true;
         settings.customizeCanvasWidth= $("#customize-canvas-width").val();
-        settings.customizeCanvasHeight=$("#customize-canvas-height").val();
+        settings.customizeCanvasHeight = $("#customize-canvas-height").val();
+        
     })
     
-    //Setting Listeners
-    $("#stroke-color").change(function(){
-        settings.strokeColor=$(this).val();
-    });
-    $("#fill-color").change(function(){ 
-        settings.fillColor=$(this).val(); 
-    });
-    $("#line-width").change(function(){
-        settings.lineWidth=$(this).val();
-    });
-    $("#edge-num").change(function(){
-        settings.edgeNum=$(this).val();
-    });
-    $("#customize-canvas-height").change(function(){
-        $("#presets .card-panel").each(function(index,ele){
-            $("#presets .card-panel").removeClass("teal").addClass("grey");
-        });
-        settings.customizeCanvasHeight=$(this).val();
+     //Confirm Canvas Size Settings (The sizes were validated by listeners)
+     $("#customize-confirm").click(function(e){
         if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
-            $("#customize-confirm").removeAttr("disabled");
+            settings.customizeCanvas=true;
+            setCanvas(canvas,context,settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            //Remove active card style
+            $("#presets .card-panel").each(function (index, ele) {
+                $("#presets .card-panel").removeClass("teal").addClass("grey");
+            });
+            clearClient();
+            history = [];
         }
         else{
-            $("#customize-confirm").attr("disabled","disabled");
+            e.preventDefault();
+            settings.customizeCanvasWidth=0;
+            settings.customizeCanvasHeight=0;
+        }
+        if (settings.image.src) {
+            
+            context.drawImage(settings.image,0,0,settings.customizeCanvasWidth,settings.customizeCanvasHeight);
+            autoSave(canvas, context, history);
         }
     });
-    $("#stroke-fill-style-picker").change(function(){
-        if($("#enable-border").is(":checked")){
-            if($("#enable-fill").is(":checked")){
-                $("#enable-border").removeAttr("disabled");
-                $("#enable-fill").removeAttr("disabled");
-                settings.strokeFillStyle="strokeFill";
-                return;
-            }
-            else{
-                $("#enable-fill").removeAttr("disabled");
-                $("#enable-border").attr("disabled","disabled");
-                settings.strokeFillStyle="stroke";
-                return;
-            }
-        }
-        else if($("#enable-fill").is(":checked")){
-            if($("#enable-border").is(":checked")){
-                $("#enable-border").removeAttr("disabled");
-                $("#enable-fill").removeAttr("disabled");
-                settings.strokeFillStyle="strokeFill";
-                return;
-            }
-            else{
-                $("#enable-border").removeAttr("disabled");
-                $("#enable-fill").attr("disabled","disabled");
-                settings.strokeFillStyle="fill";
-                return;
-            }
-        }
-    });
+
+
     $("#open-image").change(function(){
         if(this.files.length){
             let file=this.files[0];
@@ -169,16 +119,12 @@ $(function () {
             reader.onload = function(){
                 settings.image=new Image();
                 settings.image.src=reader.result;
-                
-                $("#open-message").html('<img src="' + reader.result + '" id="image-to-edit">');
-                let preview = document.getElementById("image-to-edit");
-                
-                
+                $("#open-message").html('<img src="' + reader.result + '">');             
             }
             reader.onloadend = function () {
                 settings.customizeCanvasWidth = settings.image.width;
                 settings.customizeCanvasHeight = settings.image.height;
-                setCanvas(settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+                setCanvas(canvas,context,settings.customizeCanvasWidth, settings.customizeCanvasHeight);
                 $("#customize-canvas-width").val(settings.image.width);
                 $("#customize-canvas-height").val(settings.image.height);
                
@@ -188,69 +134,18 @@ $(function () {
         }
     });
    
-    //Confirm Canvas Size Settings
-    $("#customize-confirm").click(function(e){
-        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
-            settings.customizeCanvas=true;
-            setCanvas(settings.customizeCanvasWidth, settings.customizeCanvasHeight);
-            //Remove active card style
-            $("#presets .card-panel").each(function (index, ele) {
-                $("#presets .card-panel").removeClass("teal").addClass("grey");
-            });
-        }
-        else{
-            e.preventDefault();
-            settings.customizeCanvasWidth=0;
-            settings.customizeCanvasHeight=0;
-        }
-        if (settings.image.src) {
-            
-            context.drawImage(settings.image,0,0,settings.customizeCanvasWidth,settings.customizeCanvasHeight);
-            history.push(context.getImageData(0, 0, canvas.width, canvas.height));
-        }
-    });
-
-    //Customize Canvas
-    $("#presets .card-panel").each(function(index,ele){
-        $(ele).click(function(){
-            $("#presets .card-panel").removeClass("teal").addClass("grey");
-            $(this).removeClass("grey").addClass("teal");
-            settings.customizeCanvasWidth=$(this).attr("data-width");
-            settings.customizeCanvasHeight=$(this).attr("data-height");
-            $("#customize-canvas-width").val(settings.customizeCanvasWidth);
-            $("#customize-canvas-height").val(settings.customizeCanvasHeight);
-            $("#customize-confirm").removeAttr("disabled");
-        })
-    });
-    //Validator
-    $("#customize-canvas-width").change(function(){
-        $("#presets .card-panel").each(function(index,ele){
-            $("#presets .card-panel").removeClass("teal").addClass("grey");
-        });
-        settings.customizeCanvasWidth=$(this).val();
-        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
-            $("#customize-confirm").removeAttr("disabled");
-        }
-        else{
-            $("#customize-confirm").attr("disabled","disabled");
-        }
-    });
-
     //Tool Bar Events
-    $("#revoke").click(function(){
-        history.pop();
-        context.clearRect(0,0,canvas.width,canvas.height);
-        if(history.length>0){
-            context.putImageData(history[history.length-1],0,0,0,0,canvas.width,canvas.height);
-        }
+    $("#revoke").click(function () {
+        revoke(context,history,true);
     })
     $("#save").click(function(){
         settings.urlImageToSave=canvas.toDataURL("image/png",1);
         ipc.send('save-image');
     })
-    $("#clear").click(function(){
+    $("#clear").click(function () {
+        clearClient(canvas, context);
         history=[];
-        context.clearRect(0,0,canvas.width,canvas.height);
+        // context.clearRect(0,0,canvas.width,canvas.height);
     })
 
     var startX, startY, currentX, currentY;
@@ -280,10 +175,11 @@ $(function () {
             currentX = e.offsetX;//移动中的位置
             currentY = e.offsetY;
             if (settings.shape != "eraser") {
-                context.clearRect(0, 0, canvas.width,canvas.height);//清屏，实现动态绘制
-                if (history.length != 0) {
-                    context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
-                }
+                clearClient(canvas, context);//清屏，实现动态绘制
+                //if (history.length != 0) {
+                    //context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+                    refreshClient(canvas, context, history); 
+             //   }
             }
             // if (cutflag && settings.shape == "cut") {
             //     if (iscut) {
@@ -313,7 +209,8 @@ $(function () {
             //         container.css({ display: "block" });
             //     }
             // }
-            history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+           // history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+           autoSave(canvas, context, history); 
         }
     }
 })
