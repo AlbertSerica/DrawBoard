@@ -23,6 +23,7 @@ exports.revoke = function (context, history, refresh) {
 
 exports.autoSave = function (canvas, context, history) {
     history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+    console.log("saved");
 }
 
 exports.refreshClient = function (canvas, context, history) {

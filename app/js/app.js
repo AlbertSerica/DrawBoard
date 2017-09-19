@@ -26,23 +26,8 @@ var settings = {
 
 
 $(function () {
-    
-    //Listeners
-    listen(settings);
-    ipc.on('saved-image', function (event, path) {
-        if (!path) {
-            alert("请选择正确的路径！");
-            return;
-        }
-        else {
-            var image = nativeImage.createFromDataURL(settings.urlImageToSave);
-            fs.writeFile(path, image.toPNG(), function (err) {
-                if (err)
-                    console.log(err);
-            });
-        }
-        console.log(path);
-    })
+
+   
     //Initialize modals
     $('.modal').modal({
         dismissible: true, // Modal can be dismissed by clicking outside of the modal
@@ -59,11 +44,15 @@ $(function () {
     var canvas=document.getElementById("canvas");
     var context = canvas.getContext("2d");
 
-    setCanvas(canvas,context,document.documentElement.clientWidth,document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+    setCanvas(canvas, context, document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
+    canvas.width = $("#canvas").width();
+    canvas.height = $("#canvas").height();
     autoSave(canvas, context, history); 
     $(window).resize(function(){ 
         if(!settings.customizeCanvas){
-            setCanvas(canvas,context,document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
+            setCanvas(canvas, context, document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
+            canvas.width = $("#canvas").width();
+            canvas.height = $("#canvas").height();
             refreshClient(canvas, context, history); 
             revoke(context,history, false);
             autoSave(canvas, context, history);
@@ -81,17 +70,57 @@ $(function () {
         settings.customizeCanvasHeight = $("#customize-canvas-height").val();
         
     })
-    
+     //Listeners
+     listen(settings);
+     ipc.on('saved-image', function (event, path) {
+         if (!path) {
+             alert("请选择正确的路径！");
+             return;
+         }
+         else {
+             var image = nativeImage.createFromDataURL(settings.urlImageToSave);
+             fs.writeFile(path, image.toPNG(), function (err) {
+                 if (err)
+                     console.log(err);
+             });
+         }
+         console.log(path);
+     })
+    $("#adjustments").change(function () {
+        refreshClient(canvas, context, history); 
+        let brightness = parseInt($("#brightness").val());
+        let contrast = parseInt($("#contrast").val());
+        let saturation = parseInt($("#saturation").val());
+        let hue = parseInt($("#hue").val());
+        let exposure = parseInt($("#exposure").val());
+        let noise = parseInt($("#noise").val());
+        Caman('#canvas', function () {
+            this.revert(false);
+            this.hue(hue);
+            this.contrast(contrast);
+            this.brightness(brightness);
+            this.noise(noise);
+            this.exposure(exposure);
+            this.saturation(saturation);
+            this.render();
+            
+        });        
+    });
+    Caman.Event.listen("renderFinished", function (job) {
+        console.log("finish");
+        autoSave(canvas, context, history); 
+    })
      //Confirm Canvas Size Settings (The sizes were validated by listeners)
      $("#customize-confirm").click(function(e){
         if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
             settings.customizeCanvas=true;
-            setCanvas(canvas,context,settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            setCanvas(canvas, context, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            
             //Remove active card style
             $("#presets .card-panel").each(function (index, ele) {
                 $("#presets .card-panel").removeClass("teal").addClass("grey");
             });
-            clearClient();
+            clearClient(canvas, context);
             history = [];
         }
         else{

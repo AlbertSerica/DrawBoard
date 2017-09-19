@@ -1,12 +1,12 @@
 # DrawBoard
 
-![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/language-JavaScript-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/build-passing-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/electron-1.7.6-blue.svg?style=flat-square)
+![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/language-JavaScript-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/build-passing-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/electron-1.4.16-blue.svg?style=flat-square)
 
 ## Intro
 
 Written in JavaScript ( with the help of jQuery, which is a terrible choice comparing with using Vue ), built on electron.
 
-WebGL Lib: glfx.js
+WebGL Lib: Caman.js
 
 > Quick-Start:
 >

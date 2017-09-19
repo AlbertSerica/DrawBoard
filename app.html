@@ -18,7 +18,7 @@
         delete window.exports;
         delete window.module;
     </script>
-    
+     <script type="text/javascript" src="app/js/caman.full.js"></script>
     <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>   
     <script type="text/javascript" src="app/js/materialize.min.js"></script>
     <!-- <script type="text/javascript" src="app/js/draw.js"></script>
@@ -63,7 +63,7 @@
                     <ul class="tabs tabs-fixed-width">
                         <li class="tab"><a class="active" href="#shapes">绘制</a></li>
                         <li class="tab"><a href="#styles">样式</a></li>
-                        <li class="tab"><a href="#test6">其他</a></li>
+                        <li class="tab"><a href="#adjustments">其他</a></li>
                     </ul>
                 </div>
                 <div class="card-content grey lighten-4">
@@ -109,6 +109,40 @@
                                 <span class="range-field inline input-field">  
                                         <span>线宽</span>  
                                     <input type="range" id="line-width" value="3" min="1" max="100" >
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="adjustments">
+                        <div class="row">
+                            <div class="col s4">
+                                <span class="range-field inline input-field">  
+                                    <span>亮度</span>  
+                                    <input type="range" id="brightness" value="0" min="-100" max="100" >
+                                </span>
+                                <span class="range-field inline input-field">  
+                                    <span>对比度</span>  
+                                    <input type="range" id="contrast" value="0" min="-100" max="100" >
+                                </span>
+                            </div>
+                            <div class="col s4">
+                                <span class="range-field inline input-field">  
+                                    <span>色相</span>  
+                                    <input type="range" id="hue" value="0" min="0" max="100" >
+                                </span>
+                                <span class="range-field inline input-field">  
+                                    <span>饱和度</span>  
+                                    <input type="range" id="saturation" value="0" min="-100" max="100" >
+                                </span>
+                            </div>
+                            <div class="col s4">
+                                <span class="range-field inline input-field">  
+                                    <span>曝光</span>  
+                                    <input type="range" id="exposure" value="0" min="-100" max="100" >
+                                </span>
+                                <span class="range-field inline input-field">  
+                                    <span>噪声</span>  
+                                    <input type="range" id="noise" value="0" min="0" max="20" >
                                 </span>
                             </div>
                         </div>
