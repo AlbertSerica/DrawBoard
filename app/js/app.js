@@ -15,18 +15,19 @@ const fs = nodeRequire('fs');
 
 const template = [
     {
-      label: '文件(F)',
+      label: '文件',
       submenu: [
         {
-            label: '新建画布',
+              label: '新建画布',
+              accelerator: 'CmdOrCtrl+N',  
             click(){$("#new-trigger").click()}       
         },
-        {
-          label: '新建窗口'
-        },
-        {
-          type: 'separator'
-        },
+        // {
+        //   label: '新建窗口'
+        // },
+        // {
+        //   type: 'separator'
+        // },
         // {
         //     label: '打开图片',
         //     click() {
@@ -35,11 +36,18 @@ const template = [
         // },
         {
             label: '保存',
+            accelerator: 'CmdOrCtrl+S',
             click() { $("#save").click() }  
         },
         {
             label: '另存为',
-            click() { $("#save").click() }  
+            accelerator:'CmdOrCtrl+D',
+            click() { //$("#save").click()
+                settings.urlImageToSave = canvas.toDataURL("image/png", 1);
+                ipc.send('save-image');
+                
+        
+            }  
         },
         {
           type: 'separator'
@@ -55,24 +63,32 @@ const template = [
       ]
     },
     {
-      label: '编辑(E)',
+      label: '编辑',
       submenu: [
         {
-          label:'撤销',
-          click(){revoke(context, history, true);}
+          label: '撤销',
+          accelerator: 'CmdOrCtrl+Z',
+          click() { $("#revoke").click();}
         },
         {
             label: '调整',
+            accelerator: 'CmdOrCtrl+A',
           click(){$("#adjust-trigger").click();}  
         },
         {
             label: '滤镜',
+            accelerator: 'CmdOrCtrl+Shift+F',
           click(){$("#filter-trigger").click();}  
+        },
+        {
+            label: '风格化',
+            accelerator: 'CmdOrCtrl+Shift+S',
+          click(){$("#stylize-trigger").click();}  
         }
       ]
     },
     {
-      label: '视图(V)',
+      label: '视图',
       submenu: [
         {
           label:'重载窗口',
@@ -82,10 +98,10 @@ const template = [
           label:'强制重载窗口',
           role: 'forcereload'
         },
-        {
-          label:'开发者工具',
-          role: 'toggledevtools'
-        },
+        // {
+        //   label:'开发者工具',
+        //   role: 'toggledevtools'
+        // },
         {
           type: 'separator'
         },
@@ -94,11 +110,11 @@ const template = [
           role: 'resetzoom'
         },
         {
-          label:'缩小显示',
+          label:'放大显示',
           role: 'zoomin'
         },
         {
-          label:'放大显示',
+          label:'缩小显示',
           role: 'zoomout'
         },
         {
@@ -115,7 +131,7 @@ const template = [
       ]
     },
     {
-      label: '帮助(H)',
+      label: '帮助',
       submenu: [
         {
           label: '关于',
@@ -142,7 +158,9 @@ var settings = {
     "customizeCanvasWidth": 0,
     "customizeCanvasHeight": 0,
     "image": null,
-    "urlImageToSave": null
+    "urlImageToSave": null,
+    "saved": false,
+    "savePath":null
 }
 
 
@@ -195,6 +213,7 @@ $(function () {
 
     $("#new-trigger").click(function () {
         //创建画布时，默认为当前屏幕大小
+        settings.saved = false;
         $("#customize-canvas-width").val(parseInt(document.documentElement.clientWidth));
         $("#customize-canvas-height").val(parseInt(document.documentElement.clientHeight - $("#draw-board").offset().top - 20));
         if (settings.image!=null) {
@@ -234,6 +253,8 @@ $(function () {
             alert("请选择正确的路径！");
             return;
         } else {
+            settings.saved = true;
+            settings.savePath = path;
             var image = nativeImage.createFromDataURL(settings.urlImageToSave);
             fs.writeFile(path, image.toPNG(), function (err) {
                 if (err)
@@ -572,7 +593,16 @@ $(function () {
     $("#save").click(function () {
         // Get Current Image URL
         settings.urlImageToSave = canvas.toDataURL("image/png", 1);
-        ipc.send('save-image');
+        if (!settings.saved) {
+            ipc.send('save-image');
+        }
+        else {
+            var image = nativeImage.createFromDataURL(settings.urlImageToSave);
+            fs.writeFile(settings.savePath, image.toPNG(), function (err) {
+                if (err)
+                    console.log(err);
+            });
+        }
     });
     $("#clear").click(function () {
         clearClient(canvas, context);

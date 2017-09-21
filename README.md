@@ -1,12 +1,12 @@
 # DrawBoard
 
-![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/language-JavaScript-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/build-passing-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/electron-1.4.16-blue.svg?style=flat-square)
+![Hex.pm](https://img.shields.io/hexpm/l/plug.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/language-JavaScript-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/build-passing-green.svg?style=flat-square)![Hex.pm](https://img.shields.io/badge/electron-1.7.6-blue.svg?style=flat-square)
 
 ## Intro
 
 Written in JavaScript ( with the help of jQuery, which is a terrible choice comparing with using Vue ), built on electron.
 
-WebGL Lib: Caman.js
+WebGL Lib: glfx.js
 
 > Quick-Start:
 >
@@ -42,8 +42,10 @@ WebGL Lib: Caman.js
 
 ### Image
 
+- [x] Filters ( Gaussian Blur, etc. )
+- [x] Baisic adjustments ( brightness, contrast, etc. )
+
 - [ ] Basic edit ( rotate, stretch, etc. )
-- [ ] Filters ( Gaussian Blur, etc. )
 - [ ] Selection ( Like Photoshop, I will try my best to make it functional )
 
 ### File
@@ -56,3 +58,5 @@ WebGL Lib: Caman.js
 ### Program
 
 - [x] Modularization
+- [x] Support shortcut
+- [x] File management: New, Save & Save As
