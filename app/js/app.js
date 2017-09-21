@@ -1,4 +1,6 @@
 //注意这里的都是相对项目的根目录（即index.js所在位置）的路径
+const { remote } = nodeRequire('electron');
+const { Menu, MenuItem } = remote;
 const Draw = nodeRequire('./app/js/draw');
 const setCanvas = nodeRequire('./app/js/file-events').setCanvas;
 const revoke = nodeRequire('./app/js/file-events').revoke;
@@ -10,24 +12,147 @@ const ipc = nodeRequire('electron').ipcRenderer;
 const nativeImage = nodeRequire('electron').nativeImage;
 const fs = nodeRequire('fs');
 
+
+const template = [
+    {
+      label: '文件(F)',
+      submenu: [
+        {
+            label: '新建画布',
+            click(){$("#new-trigger").click()}       
+        },
+        {
+          label: '新建窗口'
+        },
+        {
+          type: 'separator'
+        },
+        // {
+        //     label: '打开图片',
+        //     click() {
+        //       ipc.send('open-image');
+        //     }  
+        // },
+        {
+            label: '保存',
+            click() { $("#save").click() }  
+        },
+        {
+            label: '另存为',
+            click() { $("#save").click() }  
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: '关闭窗口',
+          role:'close'
+        },
+        {
+          label: '退出',
+          role:'quit'
+        }
+      ]
+    },
+    {
+      label: '编辑(E)',
+      submenu: [
+        {
+          label:'撤销',
+          click(){revoke(context, history, true);}
+        },
+        {
+            label: '调整',
+          click(){$("#adjust-trigger").click();}  
+        },
+        {
+            label: '滤镜',
+          click(){$("#blur").click();}  
+        }
+      ]
+    },
+    {
+      label: '视图(V)',
+      submenu: [
+        {
+          label:'重载窗口',
+          role: 'reload'
+        },
+        {
+          label:'强制重载窗口',
+          role: 'forcereload'
+        },
+        {
+          label:'开发者工具',
+          role: 'toggledevtools'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label:'重置缩放比例',
+          role: 'resetzoom'
+        },
+        {
+          label:'缩小显示',
+          role: 'zoomin'
+        },
+        {
+          label:'放大显示',
+          role: 'zoomout'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label:'最小化',
+          role: 'minimize'
+        },
+        {
+          label:'全屏',
+          role: 'togglefullscreen'
+        }
+      ]
+    },
+    {
+      label: '帮助(H)',
+      submenu: [
+        {
+          label: '关于',
+          click () { require('electron').shell.openExternal('https://github.com/AlbertSerica/DrawBoard') }
+        }
+      ]
+    }
+  ]
+  
+  
+  
+    const menu = Menu.buildFromTemplate(template);
+    
+
+
 var settings = {
-    "shape":"pen",
-    "lineWidth":3,
-    "edgeNum":3,
-    "strokeFillStyle":"strokeFill",
-    "strokeColor":"#000",
-    "fillColor": "#fff", 
-    "customizeCanvas":false,
-    "customizeCanvasWidth":0,
-    "customizeCanvasHeight":0,
+    "shape": "pen",
+    "lineWidth": 3,
+    "edgeNum": 3,
+    "strokeFillStyle": "strokeFill",
+    "strokeColor": "#000",
+    "fillColor": "#fff",
+    "customizeCanvas": false,
+    "customizeCanvasWidth": 0,
+    "customizeCanvasHeight": 0,
     "image": null,
-    "urlImageToSave":null
+    "urlImageToSave": null
 }
 
 
 $(function () {
 
-   
+    function a() {
+        $("#open-image").click();
+    }
+
+    Menu.setApplicationMenu(menu);
     //Initialize modals
     $('.modal').modal({
         dismissible: true, // Modal can be dismissed by clicking outside of the modal
@@ -36,155 +161,330 @@ $(function () {
         outDuration: 200, // Transition out duration
         startingTop: '4%', // Starting top style attribute
         endingTop: '10%', // Ending top style attribute
-        }
-    );
+        complete: function () { 
+            // Reset
+        $("#brightness").val(0);
+        $("#contrast").val(0);
+        $("#hue").val(0);
+        $("#saturation").val(0);
+        $("#noise").val(0);
+        $("#unsharp").val(0);
+         } 
+    });
 
     //Initialize the App: Canvas & Settings
     var history = [];
-    var canvas=document.getElementById("canvas");
+    var canvas = document.getElementById("canvas");
     var context = canvas.getContext("2d");
 
     setCanvas(canvas, context, document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
     canvas.width = $("#canvas").width();
     canvas.height = $("#canvas").height();
-    autoSave(canvas, context, history); 
-    $(window).resize(function(){ 
-        if(!settings.customizeCanvas){
+    autoSave(canvas, context, history);
+    $(window).resize(function () {
+        if (!settings.customizeCanvas) {
             setCanvas(canvas, context, document.documentElement.clientWidth, document.documentElement.clientHeight - $("#draw-board").offset().top - 20);
             canvas.width = $("#canvas").width();
             canvas.height = $("#canvas").height();
-            refreshClient(canvas, context, history); 
-            revoke(context,history, false);
+            refreshClient(canvas, context, history);
+            revoke(context, history, false);
             autoSave(canvas, context, history);
         }
     });
-     
-    
+
+
     $("#new-trigger").click(function () {
         //创建画布时，默认为当前屏幕大小
-        $("#customize-canvas-width").val(document.documentElement.clientWidth);
-        $("#customize-canvas-height").val(document.documentElement.clientHeight-$("#draw-board").offset().top-20);
+        $("#customize-canvas-width").val(parseInt(document.documentElement.clientWidth));
+        $("#customize-canvas-height").val(parseInt(document.documentElement.clientHeight - $("#draw-board").offset().top - 20));
+        if (settings.image!=null) {
+            $("#customize-canvas-width").val(settings.image.width);
+            $("#customize-canvas-height").val(settings.image.height);
+        }
         $("#canvas").removeClass("fluent");
-        settings.customizeCanvas=true;
-        settings.customizeCanvasWidth= $("#customize-canvas-width").val();
+        settings.customizeCanvas = true;
+        settings.customizeCanvasWidth = $("#customize-canvas-width").val();
         settings.customizeCanvasHeight = $("#customize-canvas-height").val();
-        
+
+    });
+    //Listeners
+    listen(settings);
+    // ipc.on('opened-image', function (event, path) {
+    //     if (!path) {
+    //         alert("请选择正确的路径！");
+    //         return;
+    //     } else {
+    //         console.log(path);
+    //         let image = nativeImage.createFromPath(path[0]);
+    //         settings.image = new Image();
+    //         settings.image.src = image.toDataURL();
+    //         // let hiddenImage = document.getElementById('image');
+    //         // hiddenImage.src = image.toDataURL();
+    //         settings.customizeCanvas = true;
+    //         settings.customizeCanvasWidth = settings.image.width;
+    //         settings.customizeCanvasHeight = settings.image.height;
+    //         $("#customize-confirm").click();
+    
+         
+    //     }
+      
+    // });
+    ipc.on('saved-image', function (event, path) {
+        if (!path) {
+            alert("请选择正确的路径！");
+            return;
+        } else {
+            var image = nativeImage.createFromDataURL(settings.urlImageToSave);
+            fs.writeFile(path, image.toPNG(), function (err) {
+                if (err)
+                    console.log(err);
+            });
+        }
+        console.log(path);
+    });
+    
+    $("#blur").click(function () {
+        let cvs = fx.canvas();
+        let image = document.getElementById('image');
+        image.src = history[history.length - 1].src;
+        // convert the image to a texture
+        let texture = cvs.texture(image);
+        cvs.draw(texture).lensBlur(10, 0.75, 0).update();
+        let img = new Image;
+        img.src = cvs.toDataURL('image/png');
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+        autoSave(canvas, context, history);
     })
-     //Listeners
-     listen(settings);
-     ipc.on('saved-image', function (event, path) {
-         if (!path) {
-             alert("请选择正确的路径！");
-             return;
-         }
-         else {
-             var image = nativeImage.createFromDataURL(settings.urlImageToSave);
-             fs.writeFile(path, image.toPNG(), function (err) {
-                 if (err)
-                     console.log(err);
-             });
-         }
-         console.log(path);
-     })
-    $("#adjustments").change(function () {
-        refreshClient(canvas, context, history); 
+    // $("#adjustments").change(function () {
+    //     // refreshClient(canvas, context, history); 
+    //     // let brightness = parseInt($("#brightness").val());
+    //     // let contrast = parseInt($("#contrast").val());
+    //     // let saturation = parseInt($("#saturation").val());
+    //     // let hue = parseInt($("#hue").val());
+    //     // let exposure = parseInt($("#exposure").val());
+    //     // let noise = parseInt($("#noise").val());
+    //     // Caman('#canvas', function () {
+    //     //     this.revert(false);
+    //     //     this.hue(hue);
+    //     //     this.contrast(contrast);
+    //     //     this.brightness(brightness);
+    //     //     this.noise(noise);
+    //     //     this.exposure(exposure);
+    //     //     this.saturation(saturation);
+    //     //     this.render();
+
+    //     // });      
+
+    //     let brightness = parseInt($("#brightness").val());
+    //     let contrast = parseInt($("#contrast").val());
+    //     let saturation = parseInt($("#saturation").val());
+    //     let hue = parseInt($("#hue").val());
+    //     let unsharp = parseInt($("#unsharp").val());
+    //     let noise = parseInt($("#noise").val());
+
+    //     let cvs = fx.canvas();
+    //     let image = document.getElementById('image');
+    //     image.src = settings.image.src;
+    //     // convert the image to a texture
+    //     let texture = cvs.texture(image);
+    //     cvs.draw(texture).brightnessContrast(0.01 * brightness, 0.01 * contrast).update();
+    //     cvs.draw(texture).hueSaturation(0.01 * hue, 0.01 * saturation).update();
+
+    //     cvs.draw(texture).denoise(50 - noise).update();
+
+    //     cvs.draw(texture).unsharpMask(100, 0.05*unsharp).update();
+    //     let img = new Image;
+    //     img.src = cvs.toDataURL('image/png');
+    //     context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    //     autoSave(canvas, context, history);  
+    // });
+    var cvs = fx.canvas();
+    var texture;
+    $("#adjust-preview").append(cvs);
+    $("#adjust-card").click(function () {
+        $("#adjust-trigger").click();
+    });
+    $("#blur-card").click(function () {
+        $("#blur").click();
+    });
+    $("#adjust-trigger").click(function (e) {
+        let image = document.getElementById('image');
+        image.src = history[history.length - 1].src;
+        texture = cvs.texture(image);
+        cvs.draw(texture).update();        
+    })
+    $("#adjustment .confirm").click(function (e) {
+        console.log(e.target);
+        $('.collapsible').collapsible('close', $(this).attr("data-index"));
+        let image = document.getElementById('image');
+        texture = cvs.texture(image); // Update Texture
+        // Update CVS
+        cvs.draw(texture).update();
+        // Reset
+        $("#brightness").val(0);
+        $("#contrast").val(0);
+        $("#hue").val(0);
+        $("#saturation").val(0);
+        $("#noise").val(0);
+        $("#unsharp").val(0);
+    });
+    $("#adjustment .cancel").click(function () {
+        $('.collapsible').collapsible('close', $(this).attr("data-index"));
+        $("#brightness").val(0);
+        $("#contrast").val(0);
+        $("#hue").val(0);
+        $("#saturation").val(0);
+        $("#noise").val(0);
+        $("#unsharp").val(0);
+    });
+    $("#adjustments-confirm").click(function (e) {
+        let image = document.getElementById('image');
+        let img = new Image();
+        img.src = image.src;
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+        autoSave(canvas, context, history);
+    });
+    $("#column1").change(function () {
         let brightness = parseInt($("#brightness").val());
         let contrast = parseInt($("#contrast").val());
+        cvs.draw(texture).brightnessContrast(0.01 * brightness, 0.01 * contrast).update();
+        let image = document.getElementById('image');
+        image.src = cvs.toDataURL('image/png');
+    });
+    $("#column2").change(function () {
         let saturation = parseInt($("#saturation").val());
         let hue = parseInt($("#hue").val());
-        let exposure = parseInt($("#exposure").val());
-        let noise = parseInt($("#noise").val());
-        Caman('#canvas', function () {
-            this.revert(false);
-            this.hue(hue);
-            this.contrast(contrast);
-            this.brightness(brightness);
-            this.noise(noise);
-            this.exposure(exposure);
-            this.saturation(saturation);
-            this.render();
-            
-        });        
+        cvs.draw(texture).hueSaturation(0.01 * hue, 0.01 * saturation).update();
+        let image = document.getElementById('image');
+        image.src = cvs.toDataURL('image/png');
     });
-    Caman.Event.listen("renderFinished", function (job) {
-        console.log("finish");
-        autoSave(canvas, context, history); 
-    })
-     //Confirm Canvas Size Settings (The sizes were validated by listeners)
-     $("#customize-confirm").click(function(e){
-        if((settings.customizeCanvasWidth>0)&&(settings.customizeCanvasHeight>0)){
-            settings.customizeCanvas=true;
+    $("#column3").change(function () {
+        let unsharp = parseInt($("#unsharp").val());
+        cvs.draw(texture).unsharpMask(100, 0.05 * unsharp).update();
+        let image = document.getElementById('image');
+        image.src = cvs.toDataURL('image/png');
+    });
+    $("#column4").change(function () {
+        let noise = parseInt($("#noise").val());
+        if (noise <= 0) {
+            cvs.draw(texture).denoise((50 + noise)).update();
+        }
+        else {
+            cvs.draw(texture).denoise((noise*0.02)).update();
+        }
+        let image = document.getElementById('image');
+        image.src = cvs.toDataURL('image/png');
+    });
+    // let img = new Image;
+    // img.src = cvs.toDataURL('image/png');
+    // context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    //autoSave(canvas, context, history);
+    // settings.adjustments.brightness = parseInt($("#brightness").val());
+
+
+    // $("#adjustment").change(function () {
+    //    
+    //     let unsharp = parseInt($("#unsharp").val());
+    //     let noise = parseInt($("#noise").val());
+    //     let image = document.getElementById('image');
+    //     image.src = history[history.length-1].src;
+    //     // convert the image to a texture
+
+
+    //     cvs.draw(texture).denoise(50 - noise).update();
+
+    //     cvs.draw(texture).unsharpMask(100, 0.05*unsharp).update();
+
+    //     // let img = new Image;
+    //     // img.src = cvs.toDataURL('image/png');
+    //     // context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    //     //autoSave(canvas, context, history);
+    //     // settings.adjustments.brightness = parseInt($("#brightness").val());
+
+    // })
+    // Caman.Event.listen("renderFinished", function (job) {
+    //     console.log("finish");
+    //     autoSave(canvas, context, history); 
+    // })
+    //Confirm Canvas Size Settings (The sizes were validated by listeners)
+    $("#customize-confirm").click(function (e) {
+        if (settings.image.src) {
+            settings.customizeCanvas = true;
+            settings.customizeCanvasWidth = settings.image.width;
+            settings.customizeCanvasHeight = settings.image.height;
+            console.log(settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            context.drawImage(settings.image, 0, 0, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            autoSave(canvas, context, history);
+        }
+        else if ((settings.customizeCanvasWidth > 0) && (settings.customizeCanvasHeight > 0)) {
+            settings.customizeCanvas = true;
             setCanvas(canvas, context, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
-            
             //Remove active card style
             $("#presets .card-panel").each(function (index, ele) {
                 $("#presets .card-panel").removeClass("teal").addClass("grey");
             });
             clearClient(canvas, context);
             history = [];
-        }
-        else{
+        } else {
             e.preventDefault();
-            settings.customizeCanvasWidth=0;
-            settings.customizeCanvasHeight=0;
+            settings.customizeCanvasWidth = 0;
+            settings.customizeCanvasHeight = 0;
         }
-        if (settings.image.src) {
-            
-            context.drawImage(settings.image,0,0,settings.customizeCanvasWidth,settings.customizeCanvasHeight);
-            autoSave(canvas, context, history);
-        }
+
     });
 
 
-    $("#open-image").change(function(){
-        if(this.files.length){
-            let file=this.files[0];
-            let reader=new FileReader();
-            if(!/image\/\w+/.test(file.type)){
+    $("#open-image").change(function () {
+        if (this.files.length) {
+            let file = this.files[0];
+            let reader = new FileReader();
+            // Check status
+            if (!/image\/\w+/.test(file.type)) {
                 $("#open-message").text("请确保文件为图像类型");
                 return false;
             }
             // onload是异步操作
-            reader.onload = function(){
-                settings.image=new Image();
-                settings.image.src=reader.result;
-                $("#open-message").html('<img src="' + reader.result + '">');             
+            reader.onload = function () {
+                settings.image = new Image();
+                settings.image.src = reader.result;
+                $("#open-message").html('<img src="' + reader.result + '">');
             }
             reader.onloadend = function () {
+                settings.customizeCanvas = true;
                 settings.customizeCanvasWidth = settings.image.width;
                 settings.customizeCanvasHeight = settings.image.height;
-                setCanvas(canvas,context,settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+                setCanvas(canvas, context, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
                 $("#customize-canvas-width").val(settings.image.width);
                 $("#customize-canvas-height").val(settings.image.height);
-               
             }
             reader.readAsDataURL(file);
-           
+
         }
     });
-   
+
     //Tool Bar Events
     $("#revoke").click(function () {
-        revoke(context,history,true);
-    })
-    $("#save").click(function(){
-        settings.urlImageToSave=canvas.toDataURL("image/png",1);
+        revoke(context, history, true);
+    });
+    $("#save").click(function () {
+        // Get Current Image URL
+        settings.urlImageToSave = canvas.toDataURL("image/png", 1);
         ipc.send('save-image');
-    })
+    });
     $("#clear").click(function () {
         clearClient(canvas, context);
-        history=[];
+        history = [];
         // context.clearRect(0,0,canvas.width,canvas.height);
-    })
+    });
 
     var startX, startY, currentX, currentY;
     var lx, ly, lw, lh;
-    canvas.onmousedown = function (e) {//按下鼠标
-        startX = e.offsetX;//按下鼠标时的位置
+    canvas.onmousedown = function (e) { //按下鼠标
+        startX = e.offsetX; //按下鼠标时的位置
         startY = e.offsetY;
         if (settings.shape == "pen") {
             context.beginPath();
-            context.moveTo(startX, startY);//按下鼠标时的位置 设置为起点
+            context.moveTo(startX, startY); //按下鼠标时的位置 设置为起点
         }
         if (settings.shape == "eraser") {
             context.clearRect(startX - 5, startY - 5, 10, 10);
@@ -194,21 +494,21 @@ $(function () {
         //         history.splice(-1, 1);
         //     }
         // }
-        var draw = new Draw(context, { 
-            strokeFillStyle: settings.strokeFillStyle, 
-            strokeColor: settings.strokeColor, 
-            fillColor:settings.fillColor,
-            width: settings.lineWidth 
-        });//实例化构造函数
+        var draw = new Draw(context, {
+            strokeFillStyle: settings.strokeFillStyle,
+            strokeColor: settings.strokeColor,
+            fillColor: settings.fillColor,
+            width: settings.lineWidth
+        }); //实例化构造函数
         canvas.onmousemove = function (e) {
-            currentX = e.offsetX;//移动中的位置
+            currentX = e.offsetX; //移动中的位置
             currentY = e.offsetY;
             if (settings.shape != "eraser") {
-                clearClient(canvas, context);//清屏，实现动态绘制
+                clearClient(canvas, context); //清屏，实现动态绘制
                 //if (history.length != 0) {
-                    //context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
-                    refreshClient(canvas, context, history); 
-             //   }
+                //context.putImageData(history[history.length - 1], 0, 0, 0, 0, canvas.width, canvas.height);//显示最后一次保存的快照
+                refreshClient(canvas, context, history);
+                //   }
             }
             // if (cutflag && settings.shape == "cut") {
             //     if (iscut) {
@@ -238,8 +538,8 @@ $(function () {
             //         container.css({ display: "block" });
             //     }
             // }
-           // history.push(context.getImageData(0, 0, canvas.width, canvas.height));
-           autoSave(canvas, context, history); 
+            // history.push(context.getImageData(0, 0, canvas.width, canvas.height));
+            autoSave(canvas, context, history);
         }
     }
 })

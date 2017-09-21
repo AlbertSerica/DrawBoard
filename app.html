@@ -12,44 +12,55 @@
         // I will use Vue instead next time ( if there is "next time" ).
         // Why not "window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.min.js')"?
         // Because it will also cause a conflict between jQuery & materialize-css!
-        
+
         window.nodeRequire = require;
         delete window.require;
         delete window.exports;
         delete window.module;
     </script>
-     <script type="text/javascript" src="app/js/caman.full.js"></script>
-    <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>   
+    <script type="text/javascript" src="app/js/caman.full.js"></script>
+    <script type="text/javascript" src="app/js/glfx.js"></script>
+    <script type="text/javascript" src="app/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="app/js/materialize.min.js"></script>
     <!-- <script type="text/javascript" src="app/js/draw.js"></script>
     <script type="text/javascript" src="app/js/app.js"></script> -->
     <!-- <script>nodeRequire('./node_modules/jquery/dist/jquery.min.js')</script>
     <script>nodeRequire('./node_modules/materialize-css/js/hammer.min.js')</script>
     <script>nodeRequire('./node_modules/materialize-css/dist/js/materialize.min.js')</script> -->
-   
-    <!-- <script>nodeRequire('./app/js/draw.js')</script> -->
-    <script>nodeRequire('./app/js/app.js')</script>
-    <script>
 
+    <!-- <script>nodeRequire('./app/js/draw.js')</script> -->
+    <script>
+        nodeRequire('./app/js/app.js')
     </script>
-   <style>
+    <script>
+    </script>
+    <style>
         #canvas {
             display: block;
             cursor: pointer;
             background-color: #FFFFFF;
-            border: 1px solid #CCCCCC;            
+            border: 1px solid #CCCCCC;
         }
-        .fluent{
+
+        #adjust-preview canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .fluent {
             max-width: 100%;
         }
-        #presets .card-panel{
+
+        #presets .card-panel,
+        #adjustments .card-panel {
             cursor: pointer;
         }
-        
     </style>
 </head>
 
 <body>
+    <img id="image" style="display: none">
     <div id="toolbar" class="row">
         <div class="col s12">
             <div class="card hoverable">
@@ -69,17 +80,17 @@
                 <div class="card-content grey lighten-4">
                     <div id="shapes">
                         <div class="row" id="shape-type">
-                            <div class="col s8" >
+                            <div class="col s8">
                                 <button class="waves-effect waves-light btn blue darken-1" data-shape="line">直线</button>
                                 <button class="waves-effect waves-light btn blue darken-1" data-shape="rect">矩形</button>
                                 <button class="waves-effect waves-light btn blue darken-1" data-shape="circle">圆</button>
-                              
+
                                 <button class="waves-effect waves-light btn blue darken-1" id="poly" data-shape="poly">多边形</button>
                                 <span class="input-field range-field inline" id="edge" style="display:none;">
                                     <span>边数</span>
-                                    <input type="range" id="edge-num" value="1" min="3" max="10" >
+                                <input type="range" id="edge-num" value="1" min="3" max="10">
                                 </span>
-            
+
                                 <button class="waves-effect waves-light btn teal darken-1" data-shape="pen">铅笔</button>
                             </div>
                             <div class="col s4">
@@ -90,8 +101,8 @@
                     <div id="styles">
                         <div class="row">
                             <div class="col s4">
-                                <span class="waves-effect waves-light btn blue-grey darken-1">线条色<input  id="stroke-color" type="color" name="color" value="#000000"></span> 
-                               
+                                <span class="waves-effect waves-light btn blue-grey darken-1">线条色<input  id="stroke-color" type="color" name="color" value="#000000"></span>
+
                             </div>
                             <div class="col s4">
                                 <form id="stroke-fill-style-picker">
@@ -100,21 +111,33 @@
                                     <input type="checkbox" class="filled-in" id="enable-fill" checked="checked" />
                                     <label for="enable-fill">填充</label>
                                 </form>
-                                <span class="waves-effect waves-light btn blue-grey darken-1" >填充色
+                                <span class="waves-effect waves-light btn blue-grey darken-1">填充色
                                     <input id="fill-color" type="color" name="color" value="#ffffff">
                                 </span>
                             </div>
                             <div class="col s4">
-                                
+
                                 <span class="range-field inline input-field">  
-                                        <span>线宽</span>  
-                                    <input type="range" id="line-width" value="3" min="1" max="100" >
+                                        <span>线宽</span>
+                                <input type="range" id="line-width" value="3" min="1" max="100">
                                 </span>
                             </div>
                         </div>
                     </div>
                     <div id="adjustments">
                         <div class="row">
+                            <div class="col s4">
+                        <div class="card-panel hoverable blue" id="adjust-card">
+                                <p class="white-text center-align">调整</p>
+                        </div></div>
+                        <div class="col s4">
+                        <div class="card-panel hoverable blue" id="blur-card">
+                                <p class="white-text center-align">镜头模糊</p>
+                        </div></div>
+                    </div>
+                        <button style="display:none" data-target="adjust" id="adjust-trigger" button class="waves-effect waves-light btn blue-grey hoverable modal-trigger">调整</button>
+                        <button style="display:none" class="waves-effect waves-light btn teal darken-1" id="blur">镜头模糊</button>
+                        <!-- <div class="row">
                             <div class="col s4">
                                 <span class="range-field inline input-field">  
                                     <span>亮度</span>  
@@ -128,7 +151,7 @@
                             <div class="col s4">
                                 <span class="range-field inline input-field">  
                                     <span>色相</span>  
-                                    <input type="range" id="hue" value="0" min="0" max="100" >
+                                    <input type="range" id="hue" value="0" min="-100" max="100" >
                                 </span>
                                 <span class="range-field inline input-field">  
                                     <span>饱和度</span>  
@@ -137,15 +160,16 @@
                             </div>
                             <div class="col s4">
                                 <span class="range-field inline input-field">  
-                                    <span>曝光</span>  
-                                    <input type="range" id="exposure" value="0" min="-100" max="100" >
+                                    <span>锐化</span>  
+                                    <input type="range" id="unsharp" value="0" min="0" max="100" >
                                 </span>
                                 <span class="range-field inline input-field">  
-                                    <span>噪声</span>  
+                                    <span>降噪</span>  
                                     <input type="range" id="noise" value="0" min="0" max="20" >
                                 </span>
+                                <button class="waves-effect waves-light btn teal darken-1" id="blur">blur</button>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -153,10 +177,10 @@
     </div>
 
     <div id="draw-board" class="row">
-            <div class="col s12 m12 l12" style="overflow: auto">
-                <canvas id="canvas" class="hoverable fluent"></canvas>
-            </div> 
-        
+        <div class="col s12 m12 l12" style="overflow: auto">
+            <canvas id="canvas" class="hoverable fluent"></canvas>
+        </div>
+
     </div>
     <div id="new" class="modal modal-fixed-footer">
         <div class="modal-content">
@@ -201,14 +225,14 @@
                         </div>
                     </div>
                     <div class="row">
-                            <div class="col s12 m12 l12">
-                                <div class="card">
-                                    <div class="card-image">
-                                        <span id="open-message"></span>
-                                    </div>
+                        <div class="col s12 m12 l12">
+                            <div class="card">
+                                <div class="card-image">
+                                    <span id="open-message"></span>
                                 </div>
                             </div>
                         </div>
+                    </div>
                 </div>
                 <div class="col s8 m6 l6 xl8" id="presets">
                     <div class="row">
@@ -219,7 +243,7 @@
                             </div>
                         </div>
                         <div class="col s12 m12 l12 xl6">
-                            <div class="card-panel grey hoverable"  data-width="1024" data-height="768">
+                            <div class="card-panel grey hoverable" data-width="1024" data-height="768">
                                 <p class="white-text center-align">小网页</p>
                                 <p class="white-text center-align">1024 * 768</p>
                             </div>
@@ -227,7 +251,7 @@
                     </div>
                     <div class="row">
                         <div class="col s12 m12 l12 xl6">
-                            <div class="card-panel grey hoverable"  data-width="840" data-height="1188">
+                            <div class="card-panel grey hoverable" data-width="840" data-height="1188">
                                 <p class="white-text center-align">A4比例</p>
                                 <p class="white-text center-align">840 * 1188</p>
                             </div>
@@ -235,18 +259,115 @@
                     </div>
                 </div>
             </div>
-           
-                   
-            
+
+
+
         </div>
         <div class="modal-footer">
-          <button class="modal-action modal-close waves-effect waves-green btn-flat">取消</button>
-          <button class="modal-action modal-close waves-effect waves-green btn-flat" id="customize-confirm">确定</button>
+            <button class="modal-action modal-close waves-effect waves-green btn-flat">取消</button>
+            <button class="modal-action modal-close waves-effect waves-green btn-flat" id="customize-confirm">确定</button>
         </div>
-      </div>
+    </div>
+    <div id="adjust" class="modal modal-fixed-footer">
+        <div class="modal-content">
+            <div class="row">
+                <h3>调整</h3>
+            </div>
+
+
+            <div class="row" id="adjustment">
+                <div class="col s4">
+                    <ul class="collapsible popout" data-collapsible="accordion">
+                        <li id="column1">
+                            <div class="collapsible-header">亮度/对比度</div>
+                            <div class="collapsible-body">
+                                <div class="row">
+                                    <span class="range-field inline input-field">  
+                                    <span>亮度</span>
+                                    <input type="range" id="brightness" value="0" min="-100" max="100">
+                                    </span>
+                                    <span class="range-field inline input-field">  
+                                    <span>对比度</span>
+                                    <input type="range" id="contrast" value="0" min="-100" max="100">
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <button class="waves-effect waves-green btn-flat cancel" data-index="0">取消</button>
+                                    <button class="waves-effect waves-green btn-flat confirm" data-index="0">确定</button>
+                                </div>
+                            </div>
+                        </li>
+                        <li id="column2">
+                            <div class="collapsible-header">色相/饱和度</div>
+                            <div class="collapsible-body">
+                                <div class="row">
+                                    <span class="range-field inline input-field">  
+                                                <span>色相</span>
+                                    <input type="range" id="hue" value="0" min="-100" max="100">
+                                    </span>
+                                    <span class="range-field inline input-field">  
+                                                <span>饱和度</span>
+                                    <input type="range" id="saturation" value="0" min="-100" max="100">
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <button class="waves-effect waves-green btn-flat cancel" data-index="1">取消</button>
+                                    <button class="waves-effect waves-green btn-flat confirm" data-index="1">确定</button>
+                                </div>
+                            </div>
+                        </li>
+                        <li id="column3">
+                            <div class="collapsible-header">锐化</div>
+                            <div class="collapsible-body">
+                                <div class="row">
+                                    <span class="range-field inline input-field">  
+                                        <span>锐化</span>
+                                    <input type="range" id="unsharp" value="0" min="0" max="100">
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <button class="waves-effect waves-green btn-flat cancel" data-index="2">取消</button>
+                                    <button class="waves-effect waves-green btn-flat confirm" data-index="2">确定</button>
+                                </div>
+                            </div>
+                        </li>
+                        <li id="column4">
+                            <div class="collapsible-header">降噪</div>
+                            <div class="collapsible-body">
+                                <div class="row">
+                                    <span class="range-field inline input-field">  
+                                        <span>降噪</span>
+                                        <input type="range" id="noise" value="0" min="-50" max="50">
+                                    </span>
+                                </div>
+                                <div class="row">
+                                    <button class="waves-effect waves-green btn-flat cancel" data-index="3">取消</button>
+                                    <button class="waves-effect waves-green btn-flat confirm" data-index="3">确定</button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+                </div>
+                <div class="col s8">
+                    <div style="max-width: 100%;max-height:100%" id="adjust-preview">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+        <div class="modal-footer">
+            <button class="modal-action modal-close waves-effect waves-green btn-flat">取消</button>
+            <button class="modal-action modal-close waves-effect waves-green btn-flat" id="adjustments-confirm">确定</button>
+        </div>
+    </div>
 </body>
 <script type="text/javascript">
-    
 </script>
 
 </html>

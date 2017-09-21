@@ -1,8 +1,10 @@
-const {app, BrowserWindow} = require('electron')
+const electron = require('electron')
+const BrowserWindow = electron.BrowserWindow
+const app = electron.app
 const path = require('path')
 const url = require('url')
-const ipc=require('electron').ipcMain
-const dialog = require('electron').dialog
+const ipc = electron.ipcMain
+const dialog = electron.dialog
 
 // 保持一个对于 window 对象的全局引用，如果你不这样做，
 // 当 JavaScript 对象被垃圾回收， window 会被自动地关闭
@@ -49,6 +51,21 @@ function createWindow () {
 // 部分 API 在 ready 事件触发后才能使用。
 app.on('ready', createWindow)
 app.on('ready', function () {
+  ipc.on('open-image', function (event) {
+    const options = {
+      title: '打开图像',
+      defaultPath: path.join(__dirname),
+      filters: [
+        { name: 'Images', extensions: ['png','jpg'] }
+      ],
+      properties: [
+        "openFile"
+      ]
+    }
+    dialog.showOpenDialog(options, function (filename) {
+      event.sender.send('opened-image', filename)
+    })
+  })
   ipc.on('save-image', function (event) {
     const options = {
       title: '保存图像',
