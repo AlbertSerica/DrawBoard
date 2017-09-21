@@ -67,7 +67,7 @@ const template = [
         },
         {
             label: '滤镜',
-          click(){$("#blur").click();}  
+          click(){$("#filter-trigger").click();}  
         }
       ]
     },
@@ -243,83 +243,180 @@ $(function () {
         console.log(path);
     });
     
-    $("#blur").click(function () {
-        let cvs = fx.canvas();
-        let image = document.getElementById('image');
-        image.src = history[history.length - 1].src;
-        // convert the image to a texture
-        let texture = cvs.texture(image);
-        cvs.draw(texture).lensBlur(10, 0.75, 0).update();
+    $("#lens-blur").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);
+        _cvs.draw(_texture).lensBlur(10, 0.75, 0).update();
         let img = new Image;
-        img.src = cvs.toDataURL('image/png');
-        context.drawImage(img, 0, 0, canvas.width, canvas.height);
-        autoSave(canvas, context, history);
-    })
-    // $("#adjustments").change(function () {
-    //     // refreshClient(canvas, context, history); 
-    //     // let brightness = parseInt($("#brightness").val());
-    //     // let contrast = parseInt($("#contrast").val());
-    //     // let saturation = parseInt($("#saturation").val());
-    //     // let hue = parseInt($("#hue").val());
-    //     // let exposure = parseInt($("#exposure").val());
-    //     // let noise = parseInt($("#noise").val());
-    //     // Caman('#canvas', function () {
-    //     //     this.revert(false);
-    //     //     this.hue(hue);
-    //     //     this.contrast(contrast);
-    //     //     this.brightness(brightness);
-    //     //     this.noise(noise);
-    //     //     this.exposure(exposure);
-    //     //     this.saturation(saturation);
-    //     //     this.render();
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("lblur");
+    });
+    $("#zoom-blur").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);
+        _cvs.draw(_texture).zoomBlur(_cvs.width / 2, _cvs.height / 2, 0.1).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("zblur");
+    });
+    $("#triangle-blur").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        	
+        _cvs.draw(_texture).triangleBlur(10).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("tblur");
+    });
+    $("#bulge").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).bulgePinch(_cvs.width/2, _cvs.height/2, 2*_cvs.width/3, 0.45).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("bulge");
+    });
+    $("#vignette").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).vignette(0.6, 0.5).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("bulge");
+    });
+    $("#sepia").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).sepia(1).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            autoSave(canvas, context, history);
+        }, 500);
+        
+        console.log("bulge");
+    });
+    $("#ink").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).ink(0.5).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+        console.log("bulge");
+    });
+    $("#edge-work").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).edgeWork(10).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+      
+        console.log("bulge");
+    });
+    $("#pixelate").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        	
+        _cvs.draw(_texture).hexagonalPixelate(_cvs.width/2, _cvs.height/2, 20).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+        
+        console.log("bulge");
+    });
+    $("#halftone").click(function () {
+        let _cvs = fx.canvas();
+        let __canvas__ = document.getElementById('canvas');
+        let _texture = _cvs.texture(__canvas__);        
+        _cvs.draw(_texture).colorHalftone(_cvs.width/2, _cvs.height/2, 0.25, 7).update();
+        let img = new Image;
+        img.src = _cvs.toDataURL('image/png');
+        setTimeout(function () {
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            autoSave(canvas, context, history);
+        }, 500);
+       
+        console.log("bulge");
+    });
 
-    //     // });      
 
-    //     let brightness = parseInt($("#brightness").val());
-    //     let contrast = parseInt($("#contrast").val());
-    //     let saturation = parseInt($("#saturation").val());
-    //     let hue = parseInt($("#hue").val());
-    //     let unsharp = parseInt($("#unsharp").val());
-    //     let noise = parseInt($("#noise").val());
-
-    //     let cvs = fx.canvas();
-    //     let image = document.getElementById('image');
-    //     image.src = settings.image.src;
-    //     // convert the image to a texture
-    //     let texture = cvs.texture(image);
-    //     cvs.draw(texture).brightnessContrast(0.01 * brightness, 0.01 * contrast).update();
-    //     cvs.draw(texture).hueSaturation(0.01 * hue, 0.01 * saturation).update();
-
-    //     cvs.draw(texture).denoise(50 - noise).update();
-
-    //     cvs.draw(texture).unsharpMask(100, 0.05*unsharp).update();
-    //     let img = new Image;
-    //     img.src = cvs.toDataURL('image/png');
-    //     context.drawImage(img, 0, 0, canvas.width, canvas.height);
-    //     autoSave(canvas, context, history);  
-    // });
     var cvs = fx.canvas();
     var texture;
     $("#adjust-preview").append(cvs);
     $("#adjust-card").click(function () {
         $("#adjust-trigger").click();
     });
-    $("#blur-card").click(function () {
-        $("#blur").click();
+    $("#filter-card").click(function () {
+        $("#filter-trigger").click();
     });
+    $("#stylize-card").click(function () {
+        $("#stylize-trigger").click();
+    });
+   
     $("#adjust-trigger").click(function (e) {
         let image = document.getElementById('image');
         image.src = history[history.length - 1].src;
         texture = cvs.texture(image);
-        cvs.draw(texture).update();        
-    })
+        setTimeout(function () { cvs.draw(texture).update(); }, 500);
+    });
     $("#adjustment .confirm").click(function (e) {
         console.log(e.target);
         $('.collapsible').collapsible('close', $(this).attr("data-index"));
         let image = document.getElementById('image');
         texture = cvs.texture(image); // Update Texture
         // Update CVS
-        cvs.draw(texture).update();
+        setTimeout(function () { cvs.draw(texture).update(); }, 500);
         // Reset
         $("#brightness").val(0);
         $("#contrast").val(0);
@@ -370,7 +467,7 @@ $(function () {
             cvs.draw(texture).denoise((50 + noise)).update();
         }
         else {
-            cvs.draw(texture).denoise((noise*0.02)).update();
+            cvs.draw(texture).noise((noise*0.02)).update();
         }
         let image = document.getElementById('image');
         image.src = cvs.toDataURL('image/png');
@@ -408,15 +505,8 @@ $(function () {
     // })
     //Confirm Canvas Size Settings (The sizes were validated by listeners)
     $("#customize-confirm").click(function (e) {
-        if (settings.image.src) {
-            settings.customizeCanvas = true;
-            settings.customizeCanvasWidth = settings.image.width;
-            settings.customizeCanvasHeight = settings.image.height;
-            console.log(settings.customizeCanvasWidth, settings.customizeCanvasHeight);
-            context.drawImage(settings.image, 0, 0, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
-            autoSave(canvas, context, history);
-        }
-        else if ((settings.customizeCanvasWidth > 0) && (settings.customizeCanvasHeight > 0)) {
+        
+        if ((settings.customizeCanvasWidth > 0) && (settings.customizeCanvasHeight > 0)) {
             settings.customizeCanvas = true;
             setCanvas(canvas, context, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
             //Remove active card style
@@ -425,10 +515,23 @@ $(function () {
             });
             clearClient(canvas, context);
             history = [];
+            autoSave(canvas, context, history);
         } else {
             e.preventDefault();
             settings.customizeCanvasWidth = 0;
             settings.customizeCanvasHeight = 0;
+        }
+        if (settings.image.src) {
+            clearClient(canvas, context);
+            history = [];
+            // settings.customizeCanvas = true;
+            // settings.customizeCanvasWidth = settings.image.width;
+            // settings.customizeCanvasHeight = settings.image.height;
+            //console.log(settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            context.drawImage(settings.image, 0, 0, settings.customizeCanvasWidth, settings.customizeCanvasHeight);
+            autoSave(canvas, context, history);
+            let image = document.getElementById('image');
+            image.src = history[history.length - 1].src;
         }
 
     });
